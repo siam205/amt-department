@@ -2,17 +2,18 @@
  * Import news, events and notices from the department's
  * "News and Events Information" spreadsheet.
  *
- *   npx tsx --env-file=.env scripts/import-news-events.ts <xlsx path> [image folder]
+ *   npx tsx --env-file=.env scripts/import-news-events.ts <xlsx path> [event image folder] [news image folder]
  *
  * Three sheets, three tables. What they share is how the department writes
  * things down, which this script has to undo:
  *
  *   · Dates arrive three ways — a real date, an Excel serial number, and the
  *     string "-" for undecided. All three end up as a date or as nothing.
- *   · Cover images are Google Drive share links, fetched and re-uploaded to
- *     Cloudinary so the site serves its own copy.
- *   · Event photographs are not in the sheet at all: they sit in folders named
- *     after the event. The folder name is matched to the event title.
+ *   · A "file name" column is resolved three ways, tried in order: a Google
+ *     Drive share link fetched and re-uploaded; a file in the image folder
+ *     whose name (minus extension) matches the column value directly; or a
+ *     folder named after the event, when photographs were never listed in
+ *     the sheet at all and instead sit filed under the event's own name.
  *   · "Extra Info" and "Details" are written as `Label : value ; Label : value`,
  *     which is a table someone typed into one cell.
  *
@@ -24,9 +25,11 @@ import { PrismaClient } from '@prisma/client';
 import { v2 as cloudinary } from 'cloudinary';
 import * as XLSX from 'xlsx';
 
-const [, , xlsxPath, imageRoot] = process.argv;
+const [, , xlsxPath, eventImageRoot, newsImageRoot] = process.argv;
 if (!xlsxPath) {
-  console.error('usage: npx tsx --env-file=.env scripts/import-news-events.ts <xlsx path> [image folder]');
+  console.error(
+    'usage: npx tsx --env-file=.env scripts/import-news-events.ts <xlsx path> [event image folder] [news image folder]',
+  );
   process.exit(1);
 }
 
@@ -75,6 +78,23 @@ function parseDate(value: unknown): Date | null {
        -25569 offset used everywhere for this conversion. */
     const date = new Date((serial - 25569) * 86400 * 1000);
     return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  /* D/M/YYYY or D/M/YY — the department writes dates day-first, not the
+     month-first order `new Date(string)` below assumes. Without this,
+     "17/1/2025" (17 Jan) parses as month 17 and silently fails, and
+     "2/1/25" (2 Jan) comes back as 1 Feb — wrong, and only quietly so
+     because it still looks like a date. Built with Date.UTC so the day
+     itself cannot shift under a non-UTC TZ, the way string parsing does. */
+  const dayFirst = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+  if (dayFirst) {
+    const day = Number(dayFirst[1]);
+    const month = Number(dayFirst[2]);
+    const year = Number(dayFirst[3]) + (dayFirst[3].length === 2 ? 2000 : 0);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const date = new Date(Date.UTC(year, month - 1, day));
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
   }
 
   const parsed = new Date(raw);
@@ -201,6 +221,30 @@ async function uploadLocal(filePath: string, folder: string, publicId: string) {
   }
 }
 
+const IMAGE_EXTENSIONS = /\.(jpe?g|png|webp)$/i;
+
+/**
+ * The sheet's "file name" column naming a file directly in the image
+ * folder — no Drive link, no per-event subfolder, just "youth fair 1"
+ * sitting next to "youth fair 1.jpg". Matched case-insensitively and with
+ * or without the extension already included, since the sheet is not
+ * consistent about that either.
+ */
+function findNamedFile(name: string, root: string): string | null {
+  if (!name || !root || !existsSync(root)) return null;
+
+  const target = name.replace(IMAGE_EXTENSIONS, '').trim().toLowerCase();
+  if (!target) return null;
+
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isFile() || !IMAGE_EXTENSIONS.test(entry.name)) continue;
+    if (entry.name.replace(IMAGE_EXTENSIONS, '').trim().toLowerCase() === target) {
+      return path.join(root, entry.name);
+    }
+  }
+  return null;
+}
+
 /**
  * Photographs live in folders named after the event, not always with the same
  * words as the title: "Welcome Onboard: Freshers' Reception for Fall 2025" is
@@ -233,7 +277,7 @@ function firstImageIn(folder: string): string | null {
 
 /* -------------------------------------------------------------------- news */
 
-async function importNews(rows: Record<string, unknown>[]) {
+async function importNews(rows: Record<string, unknown>[], root: string) {
   console.log('NEWS');
   let order = 0;
 
@@ -244,7 +288,13 @@ async function importNews(rows: Record<string, unknown>[]) {
 
     const slug = slugify(title);
     const publishedAt = parseDate(row['Published Date']) ?? new Date();
-    const cover = await uploadFromDrive(text(row['Cover Image (file name)']), 'news', slug);
+    const coverName = text(row['Cover Image (file name)']);
+
+    let cover = await uploadFromDrive(coverName, 'news', slug);
+    if (!cover) {
+      const file = findNamedFile(coverName, root);
+      if (file) cover = await uploadLocal(file, 'news', slug);
+    }
 
     const data = {
       title,
@@ -280,8 +330,17 @@ async function importEvents(rows: Record<string, unknown>[], root: string) {
 
     const slug = slugify(title);
 
-    let image = await uploadFromDrive(text(row['Image (file name)']), 'events', slug);
+    const imageName = text(row['Image (file name)']);
+    let image = await uploadFromDrive(imageName, 'events', slug);
     let source = 'drive';
+
+    if (!image) {
+      const named = findNamedFile(imageName, root);
+      if (named) {
+        image = await uploadLocal(named, 'events', slug);
+        source = path.basename(named);
+      }
+    }
 
     if (!image) {
       const folder = findEventFolder(title, root);
@@ -327,6 +386,9 @@ async function importNotices(rows: Record<string, unknown>[]) {
   console.log('NOTICES');
   let order = 0;
 
+  const dept = await prisma.departmentIdentity.findUnique({ where: { id: 'singleton' } });
+  const fallbackDepartment = dept?.name ?? 'Department';
+
   for (const row of rows) {
     const title = text(row.Title);
     if (!title) continue;
@@ -355,7 +417,7 @@ async function importNotices(rows: Record<string, unknown>[]) {
     const data = {
       title,
       category: text(row.Category) || 'Notice',
-      department: text(row['Issued By (Department/Office']) || 'Department of Naval Architecture and Marine Engineering',
+      department: text(row['Issued By (Department/Office)']) || fallbackDepartment,
       publishedAt: dated,
       displayDate: text(row['Display Date (optional)']) || null,
       description: text(row.Description),
@@ -374,12 +436,18 @@ async function importNotices(rows: Record<string, unknown>[]) {
 }
 
 async function main() {
-  const workbook = XLSX.read(readFileSync(xlsxPath), { cellDates: true });
+  /* raw: false — cell text as the department typed/formatted it, not
+     SheetJS's auto-converted Date. A date cell Excel auto-recognised (e.g.
+     the department typing "2/1/25" for 2 January) gets silently reinterpreted
+     as month-first and turns into a different real date (1 February) once
+     cellDates converts it — parseDate() below needs the original day-first
+     text to get this right, the same text a plain string cell already is. */
+  const workbook = XLSX.read(readFileSync(xlsxPath));
   const sheet = (name: string) =>
-    XLSX.utils.sheet_to_json<Record<string, unknown>>(workbook.Sheets[name], { defval: '' });
+    XLSX.utils.sheet_to_json<Record<string, unknown>>(workbook.Sheets[name], { defval: '', raw: false });
 
-  await importNews(sheet('News'));
-  await importEvents(sheet('Events'), imageRoot ?? '');
+  await importNews(sheet('News'), newsImageRoot ?? '');
+  await importEvents(sheet('Events'), eventImageRoot ?? '');
   await importNotices(sheet('Notice Board'));
 }
 

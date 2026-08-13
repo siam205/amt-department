@@ -67,12 +67,53 @@ const MISSING_COURSES: Record<
   ],
 };
 
-const text = (v: unknown): string => String(v ?? '').trim();
+/* Cells sometimes carry a hard line break from column-width wrapping in the
+   spreadsheet ("Introduction to Fashion & Apparel\nIndustries") rather than
+   an intentional paragraph break, so internal whitespace collapses to a
+   single space alongside the trim. */
+const text = (v: unknown): string => String(v ?? '').replace(/\s+/g, ' ').trim();
+
+/**
+ * Look up a column by prefix rather than an exact header string. Departments
+ * word this column differently ("Course Type ", "Course Type (Core/Elective)",
+ * trailing whitespace from a merged-cell copy/paste) and an exact-string miss
+ * silently drops every course's type instead of failing loudly.
+ */
+function columnStartingWith(row: Record<string, unknown>, prefix: string): unknown {
+  const key = Object.keys(row).find((k) => k.trim().toLowerCase().startsWith(prefix));
+  return key ? row[key] : undefined;
+}
 const number = (v: unknown): number | null => {
   if (v === '' || v === null || v === undefined) return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 };
+
+function ordinal(n: number): string {
+  const v = n % 100;
+  if (v >= 11 && v <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1: return `${n}st`;
+    case 2: return `${n}nd`;
+    case 3: return `${n}rd`;
+    default: return `${n}th`;
+  }
+}
+
+/**
+ * Some departments write the Semester column as a bare sequential number
+ * ("1".."8"); others already spell it out ("4th Year 1st Semester" — the
+ * established convention, a two-semesters-per-year programme). A bare
+ * number is expanded to that same "Nth Year Mth Semester" form; anything
+ * already wordy is left untouched.
+ */
+function normalizeSemesterName(value: string): string {
+  if (!/^\d+$/.test(value)) return value;
+  const n = Number(value);
+  const year = Math.ceil(n / 2);
+  const semInYear = n % 2 === 1 ? 1 : 2;
+  return `${ordinal(year)} Year ${ordinal(semInYear)} Semester`;
+}
 
 function rowsOf(workbook: XLSX.WorkBook, sheetName: string): Record<string, unknown>[] {
   const sheet = workbook.Sheets[sheetName];
@@ -111,7 +152,7 @@ function buildSemesters(rows: Record<string, unknown>[]): Semester[] {
   const bySemester = new Map<string, Course[]>();
 
   for (const row of withSemester) {
-    const name = text(row.Semester);
+    const name = normalizeSemesterName(text(row.Semester));
     if (!bySemester.has(name)) {
       bySemester.set(name, []);
       order.push(name);
@@ -119,7 +160,7 @@ function buildSemesters(rows: Record<string, unknown>[]): Semester[] {
     bySemester.get(name)!.push({
       code: text(row['Course Code']),
       title: text(row['Course Title']),
-      type: text(row['Course Type (Core/Elective)']),
+      type: text(columnStartingWith(row, 'course type')),
       credits: number(row.Credits),
       prerequisite: text(row['Prerequisite (If any)']) || null,
       remarks: text(row.Remarks) || null,
@@ -133,7 +174,7 @@ function buildCreditRows(rows: Record<string, unknown>[]): CreditRow[] {
   return rows
     .filter((r) => text(r.Semester))
     .map((r) => ({
-      semester: text(r.Semester),
+      semester: normalizeSemesterName(text(r.Semester)),
       total: number(r['Total Credits (Semester)']),
       core: number(r['Core Credits']),
       elective: number(r['Elective Credits']),
