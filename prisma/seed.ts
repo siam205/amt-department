@@ -78,7 +78,7 @@ const DEPARTMENT = {
   heroImage1Alt: 'Sonargaon University Naval Architecture Department',
   heroImage2Url: '/assets/hero-2.webp',
   heroImage2Alt: 'Sonargaon University Naval Architecture students and faculty',
-  heroImage3Url: '/assets/hero-1.webp',
+  heroImage3Url: '/assets/mission-vision-hero.webp',
   heroImage3Alt: 'Sonargaon University campus',
 };
 
