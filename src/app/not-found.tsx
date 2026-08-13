@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Home, Search, ArrowLeft, Cog } from 'lucide-react';
+import { Home, Search, ArrowLeft, Scissors, Shirt } from 'lucide-react';
 import Container from '@/components/ui/Container';
 import { departmentMetadata } from '@/lib/page-metadata';
 
@@ -26,12 +26,12 @@ export default function NotFound() {
       {/* Decorative background blobs */}
       <div className="absolute -top-32 -left-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] bg-accent/5 rounded-full blur-3xl pointer-events-none" />
-      <Cog
+      <Shirt
         className="absolute top-[12%] right-[8%] text-primary/[0.04] rotate-12 pointer-events-none hidden md:block"
         size={220}
         strokeWidth={1}
       />
-      <Cog
+      <Scissors
         className="absolute bottom-[10%] left-[6%] text-accent/[0.05] -rotate-12 pointer-events-none hidden md:block"
         size={160}
         strokeWidth={1}
@@ -54,7 +54,7 @@ export default function NotFound() {
           </span>
 
           <h2 className="font-display text-3xl md:text-4xl font-bold text-primary mb-4">
-            Looks like this gear is missing.
+            Seems this page has unraveled.
           </h2>
 
           <p className="text-base md:text-lg text-gray-600 leading-relaxed mb-10">

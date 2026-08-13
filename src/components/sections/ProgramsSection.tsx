@@ -11,7 +11,7 @@ import Container from '../ui/Container';
 // the heading and the small overline tag is omitted (e.g. "Graduate").
 const PROGRAM_NAME_SEP = ' — ';
 const DEFAULT_PROGRAM_IMAGE = '/assets/program-undergraduate.webp';
-const DEFAULT_CTA_TEXT = 'View More';
+const DEFAULT_CTA_TEXT = 'Learn More';
 
 type ProgramRow = {
   id: string;

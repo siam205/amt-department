@@ -9,6 +9,7 @@ import {
   applyDeliveryTransformation,
   type ImageQualityPreset,
 } from '@/lib/image-quality';
+import { compressImageIfNeeded } from '@/lib/image-compress';
 
 type Kind =
   | 'department-logo'
@@ -169,10 +170,22 @@ export default function ImageUploader({
   const showQuality = accept !== 'application/pdf';
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const original = e.target.files?.[0];
+    if (!original) return;
     setUploading(true);
     try {
+      // 0. Free-tier Cloudinary rejects anything over 10 MB. The upload
+      // below goes straight from this browser to Cloudinary — our server
+      // never sees the file — so an oversized image is resized and
+      // re-encoded here before it's sent, rather than failing at Cloudinary
+      // with no useful way to recover.
+      const file = await compressImageIfNeeded(original);
+      if (file !== original) {
+        const before = (original.size / 1024 / 1024).toFixed(1);
+        const after = (file.size / 1024 / 1024).toFixed(1);
+        toast(`Image compressed for upload: ${before} MB → ${after} MB`);
+      }
+
       // 1. Get signed Cloudinary params from our server
       const signRes = await fetch('/api/admin/uploads/sign', {
         method: 'POST',
