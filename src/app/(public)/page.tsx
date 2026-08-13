@@ -72,7 +72,7 @@ export default async function HomePage() {
            headline itself must not repeat it. */
         departmentTitle={dept.name.replace(/^Department of\s+/i, '')}
         shortCode={dept.shortCode}
-        tagline="Shaping naval architects and marine engineers who design tomorrow’s ships, marine structures, and offshore systems."
+        tagline="Shaping apparel and textile professionals who design tomorrow’s garments, production systems, and sustainable fashion."
       />
       {/* The About Overview row is a required singleton, so `overview` is only
           ever null if the seed has not run; falling back to the department name
