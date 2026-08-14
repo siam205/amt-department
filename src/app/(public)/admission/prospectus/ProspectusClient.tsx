@@ -95,7 +95,7 @@ export default function ProspectusClient({
       </p>
 
       {reading && (
-        <section className="mb-10 md:mb-14">
+        <section className="mx-auto mb-10 max-w-4xl md:mb-14">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-primary font-display text-lg font-bold md:text-xl">
@@ -130,14 +130,17 @@ export default function ProspectusClient({
 
               On a phone the frame takes the shape of an A4 page: scaled to the
               width of a narrow screen the page comes out around 480px tall, so
-              a fixed 75vh left a band of empty grey beneath it. 595x842 is the
-              page size of the documents here; one in another shape would want
-              its own ratio.
+              a fixed height left a band of empty grey beneath it. 595x842 is
+              the page size of the documents here; one in another shape would
+              want its own ratio.
 
               From `sm` up, the page is taller than any sensible frame anyway,
               so the frame keeps the fixed height it always had and the
-              document scrolls inside it. */}
-          <div className="aspect-[595/842] min-h-[320px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm sm:aspect-auto sm:h-[75vh] sm:min-h-[420px]">
+              document scrolls inside it. Width matches the download list
+              below (both sit inside the same max-w-4xl section) so the
+              reader and the list line up instead of the reader spanning the
+              full container. */}
+          <div className="aspect-[595/842] min-h-[420px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm sm:aspect-auto sm:h-[85vh] sm:min-h-[640px]">
             <iframe
               key={reading.slug}
               src={`${reading.pdf}#toolbar=0&navpanes=0&statusbar=0&view=FitH`}
