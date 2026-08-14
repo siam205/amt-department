@@ -89,6 +89,73 @@ export async function sendContactNotification(
   }
 }
 
+interface AdmissionLeadEmailPayload {
+  to: string | null;
+  fullName: string;
+  mobileNumber: string;
+  programmeName: string;
+  submittedAt: Date;
+}
+
+// Reuses UniversityIdentity.contactSubmissionEmail as the recipient —
+// one inbox for "someone wants to talk to us" rather than a second
+// admin-configurable address nobody asked for yet.
+export async function sendAdmissionLeadNotification(
+  payload: AdmissionLeadEmailPayload,
+): Promise<EmailDispatchResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return { status: 'skipped', reason: 'RESEND_API_KEY not configured' };
+  }
+  if (!payload.to || payload.to.trim().length === 0) {
+    return {
+      status: 'skipped',
+      reason: 'No recipient configured (UniversityIdentity.contactSubmissionEmail is null)',
+    };
+  }
+
+  const shortCode = await departmentShortCode();
+  const fromAddress = `Sonargaon ${shortCode} Admission <${SENDER_MAILBOX}>`;
+
+  const esc = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  const resend = new Resend(apiKey);
+  try {
+    const result = await resend.emails.send({
+      from: fromAddress,
+      to: payload.to,
+      subject: `Admission lead: ${payload.fullName}`,
+      html: `<!doctype html>
+<html><body style="margin:0;background:#f6f6f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:640px;margin:24px auto;background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    <div style="background:#2B3175;color:#fff;padding:18px 24px;">
+      <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:0.85;">Sonargaon ${shortCode}</div>
+      <div style="font-size:18px;font-weight:700;margin-top:4px;">New admission lead</div>
+    </div>
+    <div style="padding:24px;">
+      <table style="border-collapse:collapse;width:100%;">
+        <tr><td style="padding:6px 0;color:#666;font-size:12px;width:140px;">Full name</td><td style="padding:6px 0;color:#111;font-size:14px;font-weight:600;">${esc(payload.fullName)}</td></tr>
+        <tr><td style="padding:6px 0;color:#666;font-size:12px;">Mobile</td><td style="padding:6px 0;font-size:14px;"><a href="tel:${esc(payload.mobileNumber)}" style="color:#CC1579;text-decoration:none;">${esc(payload.mobileNumber)}</a></td></tr>
+        <tr><td style="padding:6px 0;color:#666;font-size:12px;">Programme</td><td style="padding:6px 0;color:#111;font-size:14px;">${esc(payload.programmeName)}</td></tr>
+        <tr><td style="padding:6px 0;color:#666;font-size:12px;">Submitted</td><td style="padding:6px 0;color:#222;font-size:13px;">${payload.submittedAt.toISOString()}</td></tr>
+      </table>
+      <div style="margin-top:20px;font-size:12px;color:#666;border-top:1px solid #eee;padding-top:14px;">
+        From the homepage admission-guidance popup. Call the number above to follow up.
+      </div>
+    </div>
+  </div>
+</body></html>`,
+    });
+    if (result.error) {
+      return { status: 'failed', error: result.error.message ?? 'Unknown Resend error' };
+    }
+    return { status: 'sent' };
+  } catch (e) {
+    return { status: 'failed', error: e instanceof Error ? e.message : 'Resend SDK threw' };
+  }
+}
+
 function renderHtml(p: ContactEmailPayload, departmentShortCode: string): string {
   const esc = (s: string) =>
     s

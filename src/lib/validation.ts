@@ -1056,6 +1056,41 @@ export const contactSubmissionStatusUpdateSchema = z.object({
 });
 
 // ─────────────────────────────────────────────────────────────────
+//  Admission Lead Popup — homepage lead-capture (public submit +
+//  admin config + admin status update). Mirrors the ContactSubmission
+//  section immediately above: same shape, same reasoning.
+// ─────────────────────────────────────────────────────────────────
+
+export const admissionLeadStatusEnum = z.enum(['new', 'contacted', 'archived']);
+
+export const admissionLeadCreateSchema = z.object({
+  fullName:      z.string().trim().min(1).max(200),
+  // Bangladeshi mobile numbers: 11 digits starting 01, optionally
+  // spaced/dashed by the visitor while typing — digits are what's
+  // stored. Lenient on the leading '+880' / '0' form rather than
+  // one exact pattern, since a rejected valid number costs a lead.
+  mobileNumber:  z.string().trim().min(1).max(20)
+    .transform((v) => v.replace(/[\s-]/g, ''))
+    .refine((v) => /^(\+?880|0)1[3-9]\d{8}$/.test(v), {
+      message: 'Enter a valid Bangladeshi mobile number',
+    }),
+  programmeName: z.string().trim().min(1).max(300),
+});
+
+export const admissionLeadStatusUpdateSchema = z.object({
+  status: admissionLeadStatusEnum,
+});
+
+export const admissionLeadPopupUpdateSchema = z.object({
+  enabled:        z.boolean(),
+  delaySeconds:   z.coerce.number().int().min(3).max(300),
+  heading:        z.string().trim().min(1).max(200),
+  subheading:     z.string().trim().min(1).max(500),
+  buttonText:     z.string().trim().min(1).max(100),
+  successMessage: z.string().trim().min(1).max(300),
+});
+
+// ─────────────────────────────────────────────────────────────────
 //  Newsletter — page CMS + public subscribe + admin subscriber actions
 // ─────────────────────────────────────────────────────────────────
 

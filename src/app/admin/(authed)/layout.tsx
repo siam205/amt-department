@@ -27,9 +27,10 @@ export default async function AuthedAdminLayout({
   // call after seeing both placements: banner reads as ambient brand
   // presence in the sidebar, while the login moment wants the focused
   // compact mark.
-  const [session, newSubmissionCount, dept, uni] = await Promise.all([
+  const [session, newSubmissionCount, newLeadCount, dept, uni] = await Promise.all([
     getSession(),
     prisma.contactSubmission.count({ where: { status: 'new' } }),
+    prisma.admissionLead.count({ where: { status: 'new' } }),
     getDepartmentIdentity(),
     getUniversityIdentity(),
   ]);
@@ -59,6 +60,7 @@ export default async function AuthedAdminLayout({
             role,
           }}
           newSubmissionCount={newSubmissionCount}
+          newLeadCount={newLeadCount}
           logoUrl={dept.logoUrl}
           logoAlt={`${uni.name} logo`}
           departmentName={dept.name.replace(/^Department of\s+/i, '')}

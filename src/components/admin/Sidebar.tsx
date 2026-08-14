@@ -49,6 +49,8 @@ import {
   Rocket,
   ShieldCheck,
   Wrench,
+  MessageSquarePlus,
+  UserPlus,
 } from 'lucide-react';
 import { useConfirm } from './ConfirmDialogProvider';
 
@@ -135,17 +137,20 @@ const ADMISSION_NAV: NavItem[] = [
   { href: '/admin/waiver-scholarship-landing', label: 'Waiver/Scholarship Landing', icon: Layers },
   { href: '/admin/waiver-categories',          label: 'Waiver Categories',     icon: HeartHandshake },
   { href: '/admin/scholarships',               label: 'Scholarships',          icon: Trophy },
+  { href: '/admin/admission-lead-popup',       label: 'Lead Popup',            icon: MessageSquarePlus },
 ];
 
 export default function Sidebar({
   user,
   newSubmissionCount,
+  newLeadCount,
   logoUrl,
   logoAlt,
   departmentName,
 }: {
   user: SidebarUser;
   newSubmissionCount: number;
+  newLeadCount: number;
   logoUrl: string;
   logoAlt: string;
   departmentName: string;
@@ -509,6 +514,24 @@ export default function Sidebar({
           {newSubmissionCount > 0 && (
             <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold rounded-full bg-accent text-white">
               {newSubmissionCount}
+            </span>
+          )}
+        </Link>
+
+        {/* Admission Leads — operational inbox, mirrors the Contact
+            Submissions placement (same badge pattern). Config for the
+            popup that feeds this lives under Admission → Lead Popup. */}
+        <Link
+          href="/admin/admission-leads"
+          className={`${linkClass(!!pathname?.startsWith('/admin/admission-leads'))} justify-between`}
+        >
+          <span className="flex items-center gap-3">
+            <UserPlus size={16} />
+            Admission Leads
+          </span>
+          {newLeadCount > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold rounded-full bg-accent text-white">
+              {newLeadCount}
             </span>
           )}
         </Link>

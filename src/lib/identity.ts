@@ -444,6 +444,14 @@ export const getTransportLanding = cache(async () => {
   return prisma.transportLanding.findUnique({ where: { id: 'singleton' } });
 });
 
+// Homepage lead-capture popup config. Null means "not configured yet"
+// — the public component treats that the same as disabled rather
+// than falling back to hardcoded copy, so an empty database never
+// shows an un-editable popup.
+export const getAdmissionLeadPopup = cache(async () => {
+  return prisma.admissionLeadPopup.findUnique({ where: { id: 'singleton' } });
+});
+
 // ─────────────────────────────────────────────────────────────────
 //  Admission CMS Part 1 — Phase 8a
 //    /admission/notice renders the single latest active notice
