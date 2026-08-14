@@ -41,7 +41,7 @@ const staticPages: SearchItem[] = [
   { title: 'Laboratory Facility', type: 'Page', href: '/about/laboratory-facility', description: 'Departmental labs and equipment' },
   { title: 'Lab Facility', type: 'Page', href: '/about/lab-facility', description: 'List of all departmental labs' },
   { title: 'Layout Plan', type: 'Page', href: '/about/department-layout', description: 'Which office is on which level' },
-  { title: 'SU NAME Club', type: 'Page', href: '/about/club', description: 'Student club of the Department of Naval Architecture and Marine Engineering' },
+  { title: 'AMT Skills Development Club', type: 'Page', href: '/about/club', description: 'Student club of the Department of Apparel Manufacture and Technology' },
 
   // Faculty
   { title: 'Faculty Members', type: 'Page', href: '/faculty-member', description: 'List of all faculty members' },

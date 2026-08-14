@@ -9,7 +9,7 @@ export async function generateMetadata() {
   return departmentMetadata({
     title: 'Laboratory Facility',
     description:
-      'Hands-on laboratories of the {department} at Sonargaon University — machining and fabrication, structures and materials, fluid mechanics and hydraulics, fluid machinery, marine engines and heat transfer.',
+      'Hands-on laboratories of the {department} at Sonargaon University — pattern making and cutting, industrial sewing and garment construction, and CAD/computer-aided apparel design.',
   });
 }
 

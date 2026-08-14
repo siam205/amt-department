@@ -6,7 +6,7 @@ import { departmentMetadata } from '@/lib/page-metadata';
 
 export async function generateMetadata() {
   return departmentMetadata({
-    title: 'Terms & Conditions — Sonargaon University',
+    title: 'Terms & Conditions',
     description:
       'Terms & Conditions for the {department}, Sonargaon University — site usage, consent, log files, and how we use your information.',
   });

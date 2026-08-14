@@ -9,7 +9,7 @@ export async function generateMetadata() {
   return departmentMetadata({
     title: 'Lab Facilities',
     description:
-      'Departmental laboratories at Sonargaon University ME — manufacturing, ICE, applied mechanics, fluid mechanics, CFD, material testing, and more.',
+      'Departmental laboratories at Sonargaon University — pattern making, industrial sewing, and computer-aided apparel design, and more.',
   });
 }
 

@@ -3,12 +3,15 @@ import { Users } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import Container from '@/components/ui/Container';
 import { getClubs, getPageHero } from '@/lib/identity';
+import { departmentMetadata } from '@/lib/page-metadata';
 
-export const metadata = {
-  title: 'Club List — Sonargaon University',
-  description:
-    'Student clubs and societies at Sonargaon University — cultural, technical, sports, and service clubs that enrich campus life.',
-};
+export async function generateMetadata() {
+  return departmentMetadata({
+    title: 'Club List',
+    description:
+      'Student clubs and societies at Sonargaon University — cultural, technical, sports, and service clubs that enrich campus life.',
+  });
+}
 
 export default async function ClubListPage() {
   const [clubs, hero] = await Promise.all([

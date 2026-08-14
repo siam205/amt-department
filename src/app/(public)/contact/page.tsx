@@ -6,12 +6,15 @@ import ContactForm from '@/components/forms/ContactForm';
 import { getContactPageContent, getCampusLocations } from '@/lib/identity';
 import { sanitizeHtml } from '@/lib/sanitize-html';
 import { DynamicLucideIcon } from '@/components/ui/DynamicLucideIcon';
+import { departmentMetadata } from '@/lib/page-metadata';
 
-export const metadata = {
-  title: 'Contact Us — Sonargaon University',
-  description:
-    'Contact Sonargaon University — phone, email, website, Facebook, and campus addresses for Permanent, Green Road and Mohakhali campuses.',
-};
+export async function generateMetadata() {
+  return departmentMetadata({
+    title: 'Contact Us',
+    description:
+      'Contact Sonargaon University — phone, email, website, Facebook, and campus addresses for Permanent, Green Road and Mohakhali campuses.',
+  });
+}
 
 // Phase 20 — quickContactCards.iconName resolves via the shared
 // DynamicLucideIcon (any Lucide name; silent HelpCircle fallback).

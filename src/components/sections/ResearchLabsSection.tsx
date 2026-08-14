@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, FlaskConical } from 'lucide-react';
 import Container from '../ui/Container';
@@ -24,35 +24,11 @@ type Props = {
 
 export default function ResearchLabsSection({ labs }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [isPaused, setIsPaused] = useState(false);
 
-  // After a smooth scroll settles, jump silently across the duplicate boundary
-  // so forward and backward feel infinite.
-  const wrapIfNeeded = (el: HTMLElement) => {
-    const halfWidth = el.scrollWidth / 2;
-    if (halfWidth <= 0) return;
-    if (el.scrollLeft >= halfWidth) {
-      el.scrollLeft = el.scrollLeft - halfWidth;
-    } else if (el.scrollLeft < 1) {
-      el.scrollLeft = el.scrollLeft + halfWidth;
-    }
-  };
-
-  useEffect(() => {
-    if (isPaused) return;
-    const intervalId = window.setInterval(() => {
-      const el = scrollRef.current;
-      if (!el) return;
-      const firstCard = el.querySelector<HTMLElement>('[data-lab-card]');
-      if (!firstCard) return;
-      const gap = parseFloat(getComputedStyle(el).columnGap || '0') || 24;
-      const step = firstCard.offsetWidth + gap;
-      el.scrollBy({ left: step, behavior: 'smooth' });
-      window.setTimeout(() => wrapIfNeeded(el), 700);
-    }, 4000);
-    return () => window.clearInterval(intervalId);
-  }, [isPaused]);
-
+  // Manual scroll only — no auto-advance, no wrap-around duplicate. A
+  // duplicated array reads fine with many labs but shows as a visible
+  // repeat when a department has few, so the row is exactly the real
+  // labs and the arrows just scroll to the end and stop.
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollRef.current;
     if (!el) return;
@@ -60,12 +36,7 @@ export default function ResearchLabsSection({ labs }: Props) {
     if (!firstCard) return;
     const gap = parseFloat(getComputedStyle(el).columnGap || '0') || 24;
     const step = firstCard.offsetWidth + gap;
-    // For backward press at the very start, hop forward to the duplicate before scrolling
-    if (direction === 'left' && el.scrollLeft < 1) {
-      el.scrollLeft = el.scrollWidth / 2;
-    }
     el.scrollBy({ left: direction === 'left' ? -step : step, behavior: 'smooth' });
-    window.setTimeout(() => wrapIfNeeded(el), 700);
   };
 
   return (
@@ -120,15 +91,11 @@ export default function ResearchLabsSection({ labs }: Props) {
 
         <div
           ref={scrollRef}
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-          onTouchStart={() => setIsPaused(true)}
-          onTouchEnd={() => setIsPaused(false)}
           className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 pt-4 pb-8 no-scrollbar px-4 sm:px-0"
         >
-          {[...labs, ...labs].map((lab, idx) => (
+          {labs.map((lab, idx) => (
             <motion.a
-              key={`${lab.slug}-${idx}`}
+              key={lab.slug}
               href={`${LAB_FACILITY_PATH}#${lab.slug}`}
               data-lab-card
               initial={{ opacity: 0, scale: 0.95 }}

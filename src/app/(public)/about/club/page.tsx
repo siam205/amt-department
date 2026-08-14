@@ -15,7 +15,7 @@ export async function generateMetadata() {
 
   return departmentMetadata({
     title: club?.heroTitle ?? 'Department Club',
-    description: `${club?.heroTitle ?? 'The student club'} of the {department} — seminars, workshops and training, research and technical projects, and professional networks in ship design and marine engineering.`,
+    description: `${club?.heroTitle ?? 'The student club'} of the {department} — seminars, workshops and training, industry visits and technical projects, and professional networks in apparel manufacturing and textile technology.`,
   });
 }
 

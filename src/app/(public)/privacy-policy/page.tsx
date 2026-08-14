@@ -6,7 +6,7 @@ import { departmentMetadata } from '@/lib/page-metadata';
 
 export async function generateMetadata() {
   return departmentMetadata({
-    title: 'Privacy Policy — Sonargaon University',
+    title: 'Privacy Policy',
     description:
       'Privacy Policy for the {department}, Sonargaon University — how we handle visitor information and respect your consent.',
   });

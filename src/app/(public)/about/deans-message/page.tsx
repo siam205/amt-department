@@ -3,13 +3,15 @@ import { notFound } from 'next/navigation';
 import PageShell from '@/components/layout/PageShell';
 import Container from '@/components/ui/Container';
 import MessageParagraphs from '@/components/sections/MessageParagraphs';
-import { getDean, getUniversityIdentity } from '@/lib/identity';
+import { getDean, getUniversityIdentity, getDepartmentIdentity } from '@/lib/identity';
 
-export const metadata = {
-  title: "Dean's Message — Faculty of Science and Engineering",
-  description:
-    "Message from the Dean of the Faculty of Science and Engineering, Sonargaon University.",
-};
+export async function generateMetadata() {
+  const dept = await getDepartmentIdentity();
+  return {
+    title: "Dean's Message",
+    description: `Message from the Dean of the ${dept.facultyName}, Sonargaon University.`,
+  };
+}
 
 const FALLBACK_HERO = '/assets/mission-vision-hero.webp';
 

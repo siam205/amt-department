@@ -12,12 +12,15 @@ import Container from '@/components/ui/Container';
 import { getBusRoutes, getTransportLanding, getPageHero } from '@/lib/identity';
 import { sanitizeHtml } from '@/lib/sanitize-html';
 import { DynamicLucideIcon } from '@/components/ui/DynamicLucideIcon';
+import { departmentMetadata } from '@/lib/page-metadata';
 
-export const metadata = {
-  title: 'Transport Service — Sonargaon University',
-  description:
-    "Sonargaon University's free bus service routes, timings, and contact numbers covering major areas across Dhaka.",
-};
+export async function generateMetadata() {
+  return departmentMetadata({
+    title: 'Transport Service',
+    description:
+      "Sonargaon University's free bus service routes, timings, and contact numbers covering major areas across Dhaka.",
+  });
+}
 
 // Phase 20 — instructions[].iconName resolves via DynamicLucideIcon
 // against the full Lucide library; silent HelpCircle fallback on
