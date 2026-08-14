@@ -141,7 +141,7 @@ export default async function FacultyDetailPage({
     <PageShell
       title={member.name}
       overline={hero?.heroOverline ?? 'Faculty'}
-      image={hero?.heroImageUrl}
+      image={hero?.heroImageUrl ?? '/assets/faculty-hero.webp'}
       imagePosition={hero ? `center ${hero.heroImageVerticalPercent}%` : undefined}
       contentClassName="bg-gray-50 py-12 md:py-20"
     >
