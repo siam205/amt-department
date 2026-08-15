@@ -1,9 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, ChevronRight, FlaskConical } from 'lucide-react';
+import { ChevronRight, FlaskConical } from 'lucide-react';
 import Container from '../ui/Container';
 
 const LAB_FACILITY_PATH = '/about/lab-facility';
@@ -24,74 +24,44 @@ type Props = {
 
 export default function ResearchLabsSection({ labs }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Center the row only when every card already fits without scrolling —
+  // centering a row that overflows would shift it so the first card(s)
+  // scroll off the left edge at rest. Measured against the real DOM
+  // rather than guessed from breakpoint widths, so it stays correct at
+  // any lab count and any viewport.
+  const [canCenter, setCanCenter] = useState(false);
 
-  // Manual scroll only — no auto-advance, no wrap-around duplicate. A
-  // duplicated array reads fine with many labs but shows as a visible
-  // repeat when a department has few, so the row is exactly the real
-  // labs and the arrows just scroll to the end and stop.
-  const scroll = (direction: 'left' | 'right') => {
+  useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const firstCard = el.querySelector<HTMLElement>('[data-lab-card]');
-    if (!firstCard) return;
-    const gap = parseFloat(getComputedStyle(el).columnGap || '0') || 24;
-    const step = firstCard.offsetWidth + gap;
-    el.scrollBy({ left: direction === 'left' ? -step : step, behavior: 'smooth' });
-  };
+    const check = () => setCanCenter(el.scrollWidth <= el.clientWidth + 1);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [labs.length]);
 
   return (
     <section className="py-8 md:py-16 bg-white overflow-hidden">
       <Container>
-        <div className="flex justify-between items-end mb-6 md:mb-8">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="w-10 h-[1.5px] bg-accent/40" />
-              <span className="text-accent font-bold tracking-[0.2em] uppercase text-[10px]">
-                Research That Advances Technology
-              </span>
-            </div>
-            <h2 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold text-primary leading-tight">
-              Research &amp; Labs
-            </h2>
+        <div className="text-center mb-6 md:mb-8">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <span className="w-10 h-[1.5px] bg-accent/40" />
+            <span className="text-accent font-bold tracking-[0.2em] uppercase text-[10px]">
+              Research That Advances Technology
+            </span>
           </div>
-          <div className="hidden md:flex gap-4">
-            <button
-              onClick={() => scroll('left')}
-              aria-label="Previous labs"
-              className="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center hover:bg-primary hover:text-white transition-all"
-            >
-              <ChevronLeft size={24} />
-            </button>
-            <button
-              onClick={() => scroll('right')}
-              aria-label="Next labs"
-              className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-all shadow-lg"
-            >
-              <ChevronRight size={24} />
-            </button>
-          </div>
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold text-primary leading-tight">
+            Research &amp; Labs
+          </h2>
         </div>
 
-        <div className="relative -mx-4 sm:mx-0">
-          {/* Mobile-only side arrows (overlay) */}
-          <button
-            onClick={() => scroll('left')}
-            aria-label="Previous labs"
-            className="md:hidden absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/95 shadow-lg border border-gray-200 flex items-center justify-center text-primary transition-opacity"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            onClick={() => scroll('right')}
-            aria-label="Next labs"
-            className="md:hidden absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-primary text-white shadow-lg flex items-center justify-center transition-opacity"
-          >
-            <ChevronRight size={20} />
-          </button>
-
+        <div className="-mx-4 sm:mx-0">
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 pt-4 pb-8 no-scrollbar px-4 sm:px-0"
+          className={`flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 pt-4 pb-8 no-scrollbar px-4 sm:px-0 ${
+            canCenter ? 'justify-center' : ''
+          }`}
         >
           {labs.map((lab, idx) => (
             <motion.a

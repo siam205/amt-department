@@ -183,51 +183,56 @@ export default function Footer({
             </div>
           </div>
 
-          <div>
-            <h4 className="font-display font-bold text-lg mb-5 border-b border-accent pb-2 inline-block">Quick Link</h4>
-            <ul className="space-y-3 text-sm text-white/70">
-              {quickLinks.map((link) => (
-                <li key={link.id}>{renderFooterLink(link)}</li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Campuses — each row links to a Google Maps query built
-              from the campus address. Replaces the previous single
-              embedded iframe (chair preferred a compact multi-campus
-              list). Section hides itself when no campuses are seeded. */}
-          {campusLinks.length > 0 && (
+          {/* Mobile pairing — Quick Link + Campuses, same reasoning as
+              the Useful Link + Get in Touch pair above: two columns
+              side by side on mobile instead of each stacking full-width. */}
+          <div className="grid grid-cols-2 gap-6 md:contents">
             <div>
-              <h4 className="font-display font-bold text-lg mb-5 border-b border-accent pb-2 inline-block">Campuses</h4>
+              <h4 className="font-display font-bold text-lg mb-5 border-b border-accent pb-2 inline-block">Quick Link</h4>
               <ul className="space-y-3 text-sm text-white/70">
-                {campusLinks.map((link) => {
-                  const live = !!link.href && !link.isDisabled;
-                  return (
-                    <li key={link.id}>
-                      <a
-                        href={live ? link.href! : '#'}
-                        {...(link.isExternal && live && {
-                          target: '_blank',
-                          rel: 'noopener noreferrer',
-                        })}
-                        aria-label={`Open ${link.name} on Google Maps`}
-                        aria-disabled={link.isDisabled || undefined}
-                        className={`group inline-flex items-center gap-1.5 transition-colors ${
-                          link.isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:text-accent'
-                        }`}
-                      >
-                        <span>{link.name}</span>
-                        <ArrowUpRight
-                          size={14}
-                          className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                        />
-                      </a>
-                    </li>
-                  );
-                })}
+                {quickLinks.map((link) => (
+                  <li key={link.id}>{renderFooterLink(link)}</li>
+                ))}
               </ul>
             </div>
-          )}
+
+            {/* Campuses — each row links to a Google Maps query built
+                from the campus address. Replaces the previous single
+                embedded iframe (chair preferred a compact multi-campus
+                list). Section hides itself when no campuses are seeded. */}
+            {campusLinks.length > 0 && (
+              <div>
+                <h4 className="font-display font-bold text-lg mb-5 border-b border-accent pb-2 inline-block">Campuses</h4>
+                <ul className="space-y-3 text-sm text-white/70">
+                  {campusLinks.map((link) => {
+                    const live = !!link.href && !link.isDisabled;
+                    return (
+                      <li key={link.id}>
+                        <a
+                          href={live ? link.href! : '#'}
+                          {...(link.isExternal && live && {
+                            target: '_blank',
+                            rel: 'noopener noreferrer',
+                          })}
+                          aria-label={`Open ${link.name} on Google Maps`}
+                          aria-disabled={link.isDisabled || undefined}
+                          className={`group inline-flex items-center gap-1.5 transition-colors ${
+                            link.isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:text-accent'
+                          }`}
+                        >
+                          <span>{link.name}</span>
+                          <ArrowUpRight
+                            size={14}
+                            className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                          />
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
