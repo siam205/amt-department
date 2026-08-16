@@ -22,6 +22,32 @@ const FALLBACK_ALT_SUFFIXES = ['Department', 'students and faculty', 'campus'];
 const UNIVERSITY_SITE_URL = 'https://su.edu.bd/';
 const UNIVERSITY_DEPARTMENTS_URL = 'https://su.edu.bd/academic-area';
 
+// These three images are the heaviest thing the site serves: as plain
+// <img> with a single full-resolution source they were ~2.3 MB, most
+// of the homepage's total payload, and a phone downloaded every byte
+// of a desktop-sized photo. Routing the same files through Next's
+// image optimizer gives the browser a width to choose from instead.
+//
+// Deliberately still a plain <img> rather than next/image: `fill` mode
+// injects its own object-position and would override the per-slot
+// inline style below (the reason the tag was written this way). A
+// srcset does not touch layout or positioning, so the framing of every
+// slide is byte-for-byte what it was — only the resolution shrinks to
+// what the device can actually display.
+//
+// Widths must come from next.config's deviceSizes (defaults here);
+// an unlisted width is rejected by the optimizer.
+const HERO_WIDTHS = [640, 828, 1080, 1200, 1920, 2048] as const;
+const HERO_FALLBACK_WIDTH = 1920;
+
+function optimizedHero(src: string, width: number): string {
+  return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=75`;
+}
+
+function heroSrcSet(src: string): string {
+  return HERO_WIDTHS.map((w) => `${optimizedHero(src, w)} ${w}w`).join(', ');
+}
+
 type HeroSectionProps = {
   imageUrls: readonly string[];
   imageAlts: readonly (string | null)[];
@@ -81,12 +107,14 @@ export default function HeroSection({
               {/* Plain <img> so the inline objectPosition survives —
                   next/image fill mode injects its own default that
                   overrides style props (see memory:
-                  project_next_image_fill_object_position). Loss of
-                  srcset/optimization is acceptable: three large hero
-                  images on the homepage are a single render path. */}
+                  project_next_image_fill_object_position). The srcset
+                  above restores the resolution-picking that next/image
+                  would have done, without its positioning side effects. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={image.src}
+                src={optimizedHero(image.src, HERO_FALLBACK_WIDTH)}
+                srcSet={heroSrcSet(image.src)}
+                sizes="100vw"
                 alt={image.alt}
                 loading={index === 0 ? 'eager' : 'lazy'}
                 fetchPriority={index === 0 ? 'high' : 'low'}

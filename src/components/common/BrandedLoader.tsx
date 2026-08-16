@@ -31,10 +31,18 @@ export default function BrandedLoader({ className = '' }: Props) {
       <div className="flex flex-col items-center gap-5">
         {/* Brand logo — static, sourced from the App Router auto-
             favicon route (src/app/icon.png, 512x512). Plain <img>
-            since next/image isn't useful here. */}
+            since next/image isn't useful here.
+
+            Served through the image optimizer: the source is a 512px
+            PNG weighing ~155 KB, and it was being downloaded at full
+            size to be drawn into a 48px box on the splash — the first
+            thing every visitor waits on. 128/256px covers the box at
+            1x and 2x, which is the same picture at a fraction of the
+            bytes. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/icon.png"
+          src="/_next/image?url=%2Ficon.png&w=128&q=75"
+          srcSet="/_next/image?url=%2Ficon.png&w=128&q=75 1x, /_next/image?url=%2Ficon.png&w=256&q=75 2x"
           alt=""
           aria-hidden="true"
           className="w-12 h-12 object-contain"
