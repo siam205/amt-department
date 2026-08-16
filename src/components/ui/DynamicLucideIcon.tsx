@@ -19,16 +19,33 @@ import type { LucideIcon, LucideProps } from 'lucide-react';
 
 const lib = LucideIcons as unknown as Record<string, LucideIcon | undefined>;
 
+// lucide-react also exports its generic base renderer under the bare
+// name `Icon` (the primitive every named icon is built from — it
+// requires an `iconNode` prop we never pass). An empty/blank `name`
+// makes the `${name}Icon` fallback below resolve to exactly that
+// component, which then throws ("Cannot read properties of undefined
+// (reading 'map')") instead of rendering anything — reproduced by
+// adding a fresh row in any admin Json-array editor (icon name starts
+// blank) before typing one in. Excluded explicitly so a blank/unknown
+// name always falls through to HelpCircle instead.
+const GENERIC_BASE_ICON = LucideIcons.Icon as unknown as LucideIcon;
+
+function resolve(name: string): LucideIcon | undefined {
+  const trimmed = name.trim();
+  if (!trimmed) return undefined;
+  const hit = lib[trimmed] ?? lib[`${trimmed}Icon`];
+  return hit && hit !== GENERIC_BASE_ICON ? hit : undefined;
+}
+
 export function DynamicLucideIcon({
   name,
   ...rest
 }: { name: string } & LucideProps) {
-  const Icon = lib[name] ?? lib[`${name}Icon`] ?? LucideIcons.HelpCircle;
+  const Icon = resolve(name) ?? LucideIcons.HelpCircle;
   return <Icon {...rest} />;
 }
 
 // Used by IconInputField for live validation feedback.
 export function hasIcon(name: string): boolean {
-  if (!name) return false;
-  return lib[name] != null || lib[`${name}Icon`] != null;
+  return resolve(name) != null;
 }
