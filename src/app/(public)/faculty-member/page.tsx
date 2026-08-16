@@ -1,10 +1,14 @@
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
-import type { Faculty } from '@prisma/client';
 import PageShell from '@/components/layout/PageShell';
 import Container from '@/components/ui/Container';
 import { getFacultyList, getPageHero } from '@/lib/identity';
 import { departmentMetadata } from '@/lib/page-metadata';
+
+/* Derived from the fetcher rather than the Prisma model: getFacultyList
+   omits private columns (phone), so the raw Faculty type is wider than what
+   this page actually receives. Deriving keeps the two in step on their own. */
+type PublicFaculty = Awaited<ReturnType<typeof getFacultyList>>[number];
 
 export async function generateMetadata() {
   return departmentMetadata({
@@ -147,7 +151,7 @@ function FacultySection({
 }: {
   overline: string;
   title: string;
-  members: Faculty[];
+  members: PublicFaculty[];
 }) {
   return (
     <section>

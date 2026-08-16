@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { Mail, Phone, IdCard, Building2, MapPin, Plus } from 'lucide-react';
+import { Mail, IdCard, Building2, MapPin, Plus } from 'lucide-react';
 import type { Faculty } from '@prisma/client';
 import PageShell from '@/components/layout/PageShell';
 import Container from '@/components/ui/Container';
@@ -215,16 +215,11 @@ export default async function FacultyDetailPage({
                 </ContactRow>
               )}
 
-              {member.phone && (
-                <ContactRow label="Phone" Icon={Phone}>
-                  <a
-                    href={`tel:${member.phone}`}
-                    className="text-primary hover:text-accent transition-colors"
-                  >
-                    {member.phone}
-                  </a>
-                </ContactRow>
-              )}
+              {/* Faculty phone numbers are deliberately not shown publicly —
+                  they are personal contact details, and the department
+                  routes enquiries through the email above. The value is
+                  still stored and editable in the admin panel, so this is
+                  a display decision, not data loss. */}
 
               {member.suId && (
                 <ContactRow label="SU ID" Icon={IdCard}>

@@ -249,14 +249,32 @@ export const getLaboratoryLabs = cache(async () => {
 // React.cache wraps each helper so multiple Server Components
 // in the same request share a single DB hit.
 
+/**
+ * Faculty phone numbers are personal contact details and are not published.
+ *
+ * Dropping the column here rather than only skipping it in the JSX matters:
+ * a server component's props are serialised into the page's RSC payload, so
+ * a value that is fetched but never rendered still ships to the browser and
+ * reads straight out of "view source". Omitting it at the query means it
+ * never leaves the database.
+ *
+ * These helpers serve public pages only — the admin panel queries Prisma
+ * directly and still sees and edits the number.
+ */
+const OMIT_PRIVATE_FACULTY_FIELDS = { phone: true } as const;
+
 export const getFacultyList = cache(async () => {
   return prisma.faculty.findMany({
     orderBy: { displayOrder: 'asc' },
+    omit: OMIT_PRIVATE_FACULTY_FIELDS,
   });
 });
 
 export const getFacultyBySlug = cache(async (slug: string) => {
-  return prisma.faculty.findUnique({ where: { slug } });
+  return prisma.faculty.findUnique({
+    where: { slug },
+    omit: OMIT_PRIVATE_FACULTY_FIELDS,
+  });
 });
 
 export const getFacultySlugs = cache(async () => {
@@ -265,11 +283,17 @@ export const getFacultySlugs = cache(async () => {
 });
 
 export const getDean = cache(async () => {
-  return prisma.faculty.findFirst({ where: { isDean: true } });
+  return prisma.faculty.findFirst({
+    where: { isDean: true },
+    omit: OMIT_PRIVATE_FACULTY_FIELDS,
+  });
 });
 
 export const getHead = cache(async () => {
-  return prisma.faculty.findFirst({ where: { isHead: true } });
+  return prisma.faculty.findFirst({
+    where: { isHead: true },
+    omit: OMIT_PRIVATE_FACULTY_FIELDS,
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────

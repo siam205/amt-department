@@ -12,6 +12,16 @@ import {ChevronRight, Home} from 'lucide-react';
 // codebase never describes the department it was copied from.
 const FALLBACK_ALT_SUFFIXES = ['Department', 'students and faculty', 'campus'];
 
+// The homepage hero breadcrumb climbs out to the university site rather
+// than staying inside this one: on the homepage, "/" is where the visitor
+// already is, so pointing "Home" there led nowhere. The trail is the real
+// hierarchy — university → its departments → this department. Same tab on
+// purpose: this reads as moving up to the parent site, not a side trip.
+// Only this breadcrumb behaves this way; the shared Breadcrumb component
+// used by inner pages still points "Home" at "/", where it is a real move.
+const UNIVERSITY_SITE_URL = 'https://su.edu.bd/';
+const UNIVERSITY_DEPARTMENTS_URL = 'https://su.edu.bd/academic-area';
+
 type HeroSectionProps = {
   imageUrls: readonly string[];
   imageAlts: readonly (string | null)[];
@@ -165,11 +175,22 @@ export default function HeroSection({
             transition={{ delay: 0.9 }}
             className="flex items-center justify-center gap-2 text-white/90 text-xs md:text-[13px] font-medium tracking-wide"
           >
-            <a href="/" className="hover:text-button-yellow flex items-center gap-1.5 transition-colors">
+            <a
+              href={UNIVERSITY_SITE_URL}
+              className="hover:text-button-yellow flex items-center gap-1.5 transition-colors"
+            >
               <Home size={13} /> Home
             </a>
             <ChevronRight size={13} className="opacity-50" />
-            <a href="#" className="hover:text-button-yellow transition-colors">Dept</a>
+            {/* Was a "Dept" crumb pointing at "#" — it named nothing and
+                went nowhere. Now the real parent listing on the
+                university site. */}
+            <a
+              href={UNIVERSITY_DEPARTMENTS_URL}
+              className="hover:text-button-yellow transition-colors"
+            >
+              Departments
+            </a>
             <ChevronRight size={13} className="opacity-50" />
             <span className="text-button-yellow font-semibold">{breadcrumbLabel}</span>
           </motion.div>

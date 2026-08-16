@@ -69,7 +69,9 @@ const DEPARTMENT = {
   name: 'Department of Naval Architecture & Marine Engineering',
   shortCode: 'NAME',
   facultyName: 'Faculty of Science & Engineering',
-  breadcrumbLabel: 'Naval Architecture',
+  // Short form — this is the last step of the homepage hero breadcrumb
+  // ("Home → NAME"), so it wants the short code, not the full name.
+  breadcrumbLabel: 'NAME',
   primaryColor: '#2b3175',
   accentColor: '#cc1579',
   buttonColor: '#f8bd23',
