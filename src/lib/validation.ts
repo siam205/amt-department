@@ -295,6 +295,8 @@ export const uploadKindSchema = z.enum([
   'legal-hero',
   'department-layout-cover',
   'department-layout-pdf',
+  // Full-text PDF of a publication, offered from its title on /research.
+  'research-pdf',
 ]);
 
 export const uploadSignSchema = z.object({
@@ -738,6 +740,13 @@ export const researchPaperCreateSchema = z.object({
   date:            optionalNullableString,
   publicationYear: z.number().int().min(1900).max(2100).nullable().optional(),
   links:           z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+  // Title target. The uploader hands back a Cloudinary URL, so the PDF
+  // fields are only ever machine-written; titleHref is typed by hand,
+  // which is why it's the one that gets a shape check.
+  titleHref:       optionalNullableString,
+  pdfUrl:          optionalNullableString,
+  pdfPublicId:     optionalNullableString,
+  pdfFileName:     optionalNullableString,
 });
 
 export const researchPaperUpdateSchema = researchPaperCreateSchema;

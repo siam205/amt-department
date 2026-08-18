@@ -883,6 +883,19 @@ model ResearchPaper {
   date            String?
   publicationYear Int?
   links           Json     @default("[]")
+
+  // What the paper's title points at, in precedence order:
+  //   1. pdfUrl    — an uploaded copy of the paper itself
+  //   2. titleHref — a URL (publisher page, DOI, repository)
+  //   3. nothing   — plain, unclickable text, as before
+  // A paper the department holds a PDF for should open that copy
+  // rather than send the reader to a paywall, which is why the upload
+  // wins over the link instead of sitting beside it.
+  titleHref       String?  @db.Text
+  pdfUrl          String?  @db.Text
+  pdfPublicId     String?
+  pdfFileName     String?
+
   displayOrder    Int
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

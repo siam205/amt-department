@@ -8,7 +8,7 @@
  * browser posts straight to Cloudinary — so the same fix has to run here,
  * on canvas, before the upload starts.
  */
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 // Each pass is a little smaller/lower-quality than the last, in case one
 // pass isn't enough for an unusually dense image (e.g. a scanned poster).

@@ -9,7 +9,7 @@ import {
   applyDeliveryTransformation,
   type ImageQualityPreset,
 } from '@/lib/image-quality';
-import { compressImageIfNeeded } from '@/lib/image-compress';
+import { compressImageIfNeeded, MAX_UPLOAD_BYTES } from '@/lib/image-compress';
 
 type Kind =
   | 'department-logo'
@@ -44,7 +44,8 @@ type Kind =
   // Phase 17
   | 'legal-hero'
   | 'department-layout-cover'
-  | 'department-layout-pdf';
+  | 'department-layout-pdf'
+  | 'research-pdf';
 
 // Per-kind ideal upload size hint, surfaced under every image field
 // so admins have a target before opening the file picker. null = no
@@ -78,6 +79,7 @@ const RECOMMENDED_SIZE_BY_KIND: Record<Kind, string | null> = {
   'legal-hero':            'Landscape banner · 1920×500',
   'department-layout-cover': 'Portrait / landscape · 1200×1600 recommended',
   'department-layout-pdf':   null,
+  'research-pdf':          null,
 };
 
 export type UploadMeta = {
@@ -186,6 +188,21 @@ export default function ImageUploader({
         toast(`Image compressed for upload: ${before} MB → ${after} MB`);
       }
 
+      // Compression only applies to raster images. A PDF (or an SVG, or
+      // an image that would not shrink) that is still over the limit
+      // would otherwise be posted to Cloudinary and come back as a bare
+      // "Cloudinary upload failed", which tells the admin nothing about
+      // what to do next. Say what is wrong and what would fix it.
+      if (file.size > MAX_UPLOAD_BYTES) {
+        const mb = (file.size / 1024 / 1024).toFixed(1);
+        const limit = MAX_UPLOAD_BYTES / 1024 / 1024;
+        throw new Error(
+          file.type === 'application/pdf'
+            ? `This PDF is ${mb} MB — over the ${limit} MB upload limit. Compress it (e.g. an "optimise"/"reduce file size" export) and try again.`
+            : `This file is ${mb} MB — over the ${limit} MB upload limit, and it could not be compressed automatically. Please use a smaller file.`,
+        );
+      }
+
       // 1. Get signed Cloudinary params from our server
       const signRes = await fetch('/api/admin/uploads/sign', {
         method: 'POST',
@@ -194,7 +211,25 @@ export default function ImageUploader({
       });
       if (!signRes.ok) {
         const data = await signRes.json().catch(() => ({}));
-        throw new Error(data.error ?? 'Failed to sign upload');
+        // The endpoint answers a rejected body with a bare
+        // "Validation failed" plus an `issues` array naming the field
+        // that was refused. Only the headline was being surfaced, so a
+        // server that didn't recognise this uploader's `kind` — a stale
+        // dev server, or a deploy missing the matching validation change
+        // — showed the admin two words and nothing to act on. Append the
+        // detail so the next failure names itself.
+        const issues = Array.isArray(data.issues)
+          ? data.issues
+              .map((i: { path?: string; message?: string }) =>
+                [i.path, i.message].filter(Boolean).join(': '),
+              )
+              .filter(Boolean)
+              .join('; ')
+          : '';
+        const headline = data.error ?? 'Failed to sign upload';
+        throw new Error(
+          issues ? `${headline} — ${issues} (kind: "${kind}")` : headline,
+        );
       }
       const sign = await signRes.json();
 

@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { ResearchPaper } from '@prisma/client';
+import ImageUploader from '@/components/admin/ImageUploader';
 import KeyValueListEditor from '@/components/admin/KeyValueListEditor';
 import {
   createResearchPaperAction,
@@ -12,11 +13,17 @@ import {
 } from '@/lib/admin-actions/research-papers';
 
 type State = ActionResult | { ok: null };
+type PdfState = { url: string; publicId: string; fileName: string };
 
 export default function ResearchPaperForm({ initial }: { initial: ResearchPaper | null }) {
   const isEdit = !!initial;
   const action = isEdit ? updateResearchPaperAction.bind(null, initial!.id) : createResearchPaperAction;
   const [state, formAction, pending] = useActionState<State, FormData>(action, { ok: null });
+  const [pdf, setPdf] = useState<PdfState>({
+    url: initial?.pdfUrl ?? '',
+    publicId: initial?.pdfPublicId ?? '',
+    fileName: initial?.pdfFileName ?? '',
+  });
 
   useEffect(() => {
     if (state.ok === true) toast.success(isEdit ? 'Research paper saved' : 'Research paper created');
@@ -50,6 +57,42 @@ export default function ResearchPaperForm({ initial }: { initial: ResearchPaper 
           valuePlaceholder="https://doi.org/10.1109/..."
           addButtonLabel="Add link"
           emptyHint="No links yet."
+        />
+      </Card>
+
+      <Card title="Title link">
+        <p className="text-xs text-gray-500 -mt-1">
+          What the paper&apos;s title opens on <code className="font-mono">/research</code>. Fill in
+          either or neither — an uploaded PDF wins over the link, and with both left empty the
+          title stays plain text.
+        </p>
+
+        {/* Controlled via onChange rather than the uploader's own hidden
+            inputs, because the original filename has to be captured too —
+            it becomes the download filename on the public page. Same
+            shape as DepartmentLayoutForm's PDF field. */}
+        <ImageUploader
+          kind="research-pdf"
+          name="pdf"
+          accept="application/pdf"
+          label="Full paper (PDF, optional)"
+          initialUrl={pdf.url}
+          initialPublicId={pdf.publicId}
+          initialFileType="pdf"
+          initialFileName={pdf.fileName}
+          onChange={(url, publicId, meta) =>
+            setPdf({ url, publicId, fileName: meta?.fileName ?? '' })
+          }
+        />
+        <input type="hidden" name="pdfUrl" value={pdf.url} />
+        <input type="hidden" name="pdfPublicId" value={pdf.publicId} />
+        <input type="hidden" name="pdfFileName" value={pdf.fileName} />
+
+        <TextField
+          label="Link (optional) — used only when no PDF is uploaded"
+          name="titleHref"
+          defaultValue={initial?.titleHref ?? ''}
+          placeholder="https://doi.org/10.4018/..."
         />
       </Card>
 

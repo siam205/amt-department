@@ -5,9 +5,11 @@ import {
   Users,
   FileText,
   ExternalLink,
+  Download,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { withAttachmentDownload } from '@/lib/pdf-helpers';
 import PageShell from '@/components/layout/PageShell';
 import Container from '@/components/ui/Container';
 import {
@@ -30,6 +32,17 @@ export async function generateMetadata() {
    is a screen or two of scrolling — enough to be worth turning, short enough
    to read. */
 const PAGE_SIZE = 20;
+
+/**
+ * Where a paper's title points. An uploaded PDF is the department's own
+ * copy of the paper, so it beats the external link — a reader clicking
+ * the title gets the paper itself rather than a publisher landing page
+ * that may sit behind a paywall. With neither set the title is plain
+ * text, which is how every existing row already renders.
+ */
+function titleHrefOf(paper: { pdfUrl: string | null; titleHref: string | null }): string | null {
+  return paper.pdfUrl || paper.titleHref || null;
+}
 
 type SearchParams = Promise<{ page?: string | string[] }>;
 
@@ -70,9 +83,9 @@ export default async function ResearchPage({ searchParams }: { searchParams: Sea
         <div className="mx-auto max-w-3xl text-center mb-10 md:mb-14">
           <p className="text-[15px] md:text-[16px] leading-[1.85] text-gray-700">
             Research publications by faculty and students of the {dept.name}, Sonargaon
-            University{span ? `, from ${span.from} to ${span.to}` : ''} — ship design and construction,
-            hydrodynamics, marine structures, shipyard practice, and the technical and
-            consultancy work behind them.
+            University{span ? `, from ${span.from} to ${span.to}` : ''} — apparel manufacturing and
+            production engineering, textile materials and wet processing, garment quality and
+            industrial engineering, merchandising and supply chains, and sustainable fashion.
           </p>
           <p className="mt-4 inline-flex items-center gap-2 text-[13px] font-semibold text-primary bg-primary/5 px-4 py-1.5 rounded-full">
             <FileText size={14} />
@@ -106,7 +119,18 @@ export default async function ResearchPage({ searchParams }: { searchParams: Sea
 
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[15px] md:text-[16px] font-bold leading-snug text-primary mb-3">
-                    {paper.title}
+                    {titleHrefOf(paper) ? (
+                      <a
+                        href={titleHrefOf(paper)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-accent transition-colors underline-offset-2 hover:underline"
+                      >
+                        {paper.title}
+                      </a>
+                    ) : (
+                      paper.title
+                    )}
                   </h3>
 
                   <div className="flex flex-wrap gap-x-5 gap-y-2 mb-3 text-[12.5px]">
@@ -128,9 +152,23 @@ export default async function ResearchPage({ searchParams }: { searchParams: Sea
                     <span className="text-gray-500">{paper.area}</span>
                   </div>
 
-                  {Array.isArray(paper.links) && paper.links.length > 0 && (
+                  {(paper.pdfUrl || (Array.isArray(paper.links) && paper.links.length > 0)) && (
                     <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
-                      {paper.links.filter((l: any) => l?.label && l?.value).map((link: any, i: number) => (
+                      {/* The title already opens the PDF; this is the
+                          "keep a copy" half of the same file, since a
+                          browser-rendered PDF gives no obvious way to
+                          save it. */}
+                      {paper.pdfUrl && (
+                        <a
+                          href={withAttachmentDownload(paper.pdfUrl)}
+                          download={paper.pdfFileName ?? undefined}
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white bg-primary hover:bg-primary/90 px-2.5 py-1 rounded-full transition-colors"
+                        >
+                          <Download size={11} />
+                          Download PDF
+                        </a>
+                      )}
+                      {(Array.isArray(paper.links) ? paper.links : []).filter((l: any) => l?.label && l?.value).map((link: any, i: number) => (
                         <a
                           key={i}
                           href={link.value}
